@@ -13,9 +13,10 @@ class RemoveOrphansCommand extends AbstractCommand
     protected function configure()
     {
         $this->setName('media:images:removeorphans')
-                ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'Dry run? (yes|no)')
-                ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, 'Only search first L files (useful for testing)')
-                ->setDescription('Remove orphaned files from disk (orphans are files which do exist but are not found the database). [elgentos]');
+            ->addOption('dry-run', 'd', InputOption::VALUE_NONE, 'Dry run? (yes|no)')
+            ->addOption('limit', 'l', InputOption::VALUE_OPTIONAL, 'Only search first L files (useful for testing)')
+            ->setDescription('Remove orphaned files from disk (orphans are files which do exist but are not found the database). [elgentos]');
+        parent::configure();
     }
 
     /**
@@ -25,11 +26,6 @@ class RemoveOrphansCommand extends AbstractCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $this->detectMagento($output);
-        if (!$this->initMagento()) {
-            return 1;
-        }
-
         // Get options
         $dryRun = $input->getOption('dry-run');
         $interactive = !$input->getOption('no-interaction');
@@ -38,12 +34,12 @@ class RemoveOrphansCommand extends AbstractCommand
 
             /** @var \Symfony\Component\Console\Helper\QuestionHelper $dialog */
             $dialog = $this->getHelperSet()
-                    ->get('question');
+                ->get('question');
 
             $dryRun = $dialog->ask(
-                    $input,
-                    $output,
-                    new ConfirmationQuestion('<question>Dry run?</question> <comment>[no]</comment>', false)
+                $input,
+                $output,
+                new ConfirmationQuestion('<question>Dry run?</question> <comment>[no]</comment>', false)
             );
         }
 
@@ -155,7 +151,7 @@ class RemoveOrphansCommand extends AbstractCommand
         array_walk($mediaFilesHashes, function($hashInfo) use ($mediaBaseDir, &$mediaFilesToRemove, &$sizeBefore, &$sizeAfter, &$values, &$gallery) {
 
             $sizeBefore += $hashInfo['size'];
-            $file = str_replace($mediaBaseDir, '', $hashInfo['file']);
+            $file = str_replace($mediaBaseDir . 'catalog' . DIRECTORY_SEPARATOR  . 'product', '', $hashInfo['file']);
 
             if (isset($values[$file]) || isset($gallery[$file])) {
                 // Exists in gallery or values
@@ -170,19 +166,19 @@ class RemoveOrphansCommand extends AbstractCommand
         $mediaFilesToRemoveCount = $mediaFilesCount - count($mediaFilesToRemove);
 
         return [
-                'stats' => [
-                        'count' => [
-                                'before' => $mediaFilesCount,
-                                'after' => $mediaFilesToRemoveCount,
-                                'percent' => 1 - $mediaFilesToRemoveCount / $mediaFilesCount
-                        ],
-                        'size' => [
-                                'before' => $sizeBefore,
-                                'after' => $sizeAfter,
-                                'percent' => 1 - $sizeAfter / $sizeBefore
-                        ]
+            'stats' => [
+                'count' => [
+                    'before' => $mediaFilesCount,
+                    'after' => $mediaFilesToRemoveCount,
+                    'percent' => 1 - $mediaFilesToRemoveCount / $mediaFilesCount
                 ],
-                'files' => $mediaFilesToRemove
+                'size' => [
+                    'before' => $sizeBefore,
+                    'after' => $sizeAfter,
+                    'percent' => 1 - $sizeAfter / $sizeBefore
+                ]
+            ],
+            'files' => $mediaFilesToRemove
         ];
     }
 
@@ -215,19 +211,19 @@ class RemoveOrphansCommand extends AbstractCommand
         $formattedBefore = $measureBefore->convertTo(\Zend_Measure_Binary::MEGABYTE);
         $formattedAfter = $measureAfter->convertTo(\Zend_Measure_Binary::MEGABYTE);
 
-        $pad1Length = max(strlen($countBefore), strlen($formattedBefore));
-        $pad2Length = max(strlen($countAfter), strlen($formattedAfter));
+        $pad1Length = max(strlen((string)$countBefore), strlen($formattedBefore));
+        $pad2Length = max(strlen((string)$countAfter), strlen($formattedAfter));
 
         $output->writeln('<info>Statistics: (before -> after)</info>');
         $output->writeln(' <comment>files:</comment> ' .
-                str_pad($countBefore, $pad1Length, ' ', STR_PAD_LEFT) . ' -> ' .
-                str_pad($countAfter, $pad2Length, ' ', STR_PAD_LEFT) .
-                ' (' . round($countPercentage * 100, 1) . '%)');
+            str_pad((string)$countBefore, $pad1Length, ' ', STR_PAD_LEFT) . ' -> ' .
+            str_pad((string)$countAfter, $pad2Length, ' ', STR_PAD_LEFT) .
+            ' (' . round($countPercentage * 100, 1) . '%)');
 
         $output->writeln(' <comment>size:</comment>  ' .
-                str_pad($formattedBefore, $pad1Length, ' ', STR_PAD_LEFT) . ' -> ' .
-                str_pad($formattedAfter, $pad2Length, ' ', STR_PAD_LEFT) .
-                ' (' . round($sizePercentage * 100, 1) . '%)');
+            str_pad($formattedBefore, $pad1Length, ' ', STR_PAD_LEFT) . ' -> ' .
+            str_pad($formattedAfter, $pad2Length, ' ', STR_PAD_LEFT) .
+            ' (' . round($sizePercentage * 100, 1) . '%)');
 
         $output->writeln("\n");
     }

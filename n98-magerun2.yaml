@@ -1,0 +1,27 @@
+autoloaders:
+  Elgentos: %module%/src
+
+commands:
+  customCommands:
+#    - Elgentos\Magento\Command\System\Store\Config\BaseUrlSetCommand
+#    - Elgentos\Magento\Command\Media\SyncCommand
+#    - Elgentos\Magento\Command\Extension\TranslationsCommand
+#    - Elgentos\Magento\Command\Dev\TemplateVars
+#    - Elgentos\Magento\Command\Dev\OldAdminRouting
+#    - Elgentos\Magento\Command\Dev\Entity\InspectCommand
+#    - Elgentos\Magento\Command\Dev\Events\ListCommand
+#    - Elgentos\Magento\Command\Dev\Events\FireCommand
+#    - Elgentos\Magento\Command\Dev\Events\ListenCommand
+#    - Elgentos\Magento\Command\Eav\Attributes\AddToSetCommand
+#    - Elgentos\Magento\Command\Eav\Attributes\MergeCommand
+#    - Elgentos\Magento\Command\Eav\Attributes\UndupeOptionsCommand
+#    - Elgentos\Magento\Command\Customer\CleanTaxvatCommand
+#    - Elgentos\Magento\Command\System\Url\Rewrites\ExportCommand
+#    - Elgentos\Magento\Command\Media\Images\CleanTablesCommand
+#    - Elgentos\Magento\Command\Media\Images\CleanCacheCommand
+#    - Elgentos\Magento\Command\Media\Images\DefaultImageCommand
+#    - Elgentos\Magento\Command\Media\Images\RemoveDuplicatesCommand
+    - Elgentos\Magento\Command\Media\Images\RemoveOrphansCommand
+#    - Elgentos\Magento\Command\Dev\PossibleSqlInjection
+#    - Elgentos\Magento\Command\System\Store\Config\PackageThemeCommand
+#    - Elgentos\Magento\Command\Migration\DeltaUpdateChangelogCommand

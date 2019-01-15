@@ -3,9 +3,21 @@
 namespace Elgentos\Magento\Command\Media\Images;
 
 use N98\Magento\Command\AbstractMagentoCommand;
+use Magento\Framework\App\Filesystem\DirectoryList;
+use Magento\Framework\Filesystem;
+use Magento\Framework\App\ResourceConnection;
 
 class AbstractCommand extends AbstractMagentoCommand
 {
+    /**
+     * @var \Magento\Framework\Filesystem
+     */
+    private $filesystem;
+
+    /**
+     * @var \Magento\Framework\App\ResourceConnection
+     */
+    protected $resource;
 
     /**
      * @var int
@@ -17,6 +29,18 @@ class AbstractCommand extends AbstractMagentoCommand
      */
     protected $_totalSteps = 1;
 
+
+    /**
+     * @param Filesystem $filesystem
+     * @param ResourceConnection $resource
+     */
+    public function inject(
+        Filesystem $filesystem,
+        ResourceConnection $resource
+    ) {
+        $this->filesystem = $filesystem;
+        $this->resource = $resource;
+    }
 
     /**
      * Set total steps
@@ -70,8 +94,8 @@ class AbstractCommand extends AbstractMagentoCommand
      */
     protected function _getMediaBase()
     {
-        return $this->_getModel('catalog/product_media_config', '\Mage_Catalog_Model_Product_Media_Config')
-                ->getBaseMediaPath();
+        $mediaDirectory = $this->filesystem->getDirectoryRead(DirectoryList::MEDIA);
+        return $mediaDirectory->getAbsolutePath();
     }
 
 
@@ -85,24 +109,24 @@ class AbstractCommand extends AbstractMagentoCommand
     {
         // Get all files without cache
         return array_filter(
-                glob($mediaBaseDir . DS . '*' . DS . '*' . DS . '**'),
-                function($file) use ($mediaBaseDir) {
-                    if (is_dir($file)) {
-                        // Skip directories
-                        return false;
-                    } elseif (strpos($file, DS . 'cache' . DS) !== false) {
-                        // Skip cache directory
-                        return false;
-                    } elseif (strpos($file, DS . 'placeholder' . DS) !== false) {
-                        // Skip placeholder directory
-                        return false;
-                    } elseif (strpos($file, DS . 'watermark' . DS) !== false) {
-                        // Skip watermark directory
-                        return false;
-                    }
-
-                    return true;
+            glob($mediaBaseDir . 'catalog' . DIRECTORY_SEPARATOR  . 'product' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '*' . DIRECTORY_SEPARATOR . '**'),
+            function($file) use ($mediaBaseDir) {
+                if (is_dir($file)) {
+                    // Skip directories
+                    return false;
+                } elseif (strpos($file, DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR) !== false) {
+                    // Skip cache directory
+                    return false;
+                } elseif (strpos($file, DIRECTORY_SEPARATOR . 'placeholder' . DIRECTORY_SEPARATOR) !== false) {
+                    // Skip placeholder directory
+                    return false;
+                } elseif (strpos($file, DIRECTORY_SEPARATOR . 'watermark' . DIRECTORY_SEPARATOR) !== false) {
+                    // Skip watermark directory
+                    return false;
                 }
+
+                return true;
+            }
         );
     }
 
@@ -123,10 +147,10 @@ class AbstractCommand extends AbstractMagentoCommand
             $hash = $md5sum . ':' . $size;
 
             $data = [
-                    'file' => $file,
-                    'hash' => $hash,
-                    'md5sum' => $md5sum,
-                    'size' => $size
+                'file' => $file,
+                'hash' => $hash,
+                'md5sum' => $md5sum,
+                'size' => $size
             ];
 
             $callback && call_user_func($callback, $data);
@@ -143,19 +167,15 @@ class AbstractCommand extends AbstractMagentoCommand
      */
     protected function _getProductImageValues()
     {
-        /** @var \Mage_Core_Model_Resource $resource */
-        $resource = $this->_getModel('core/resource', '\Mage_Core_Model_Resource');
-
-        /** @var \Magento_Db_Adapter_Pdo_Mysql $connection */
-        $connection = $resource->getConnection('core_write');
-
-        $varcharTable = $resource->getTableName('catalog/product') . '_varchar';
+        $connection = $this->resource->getConnection(\Magento\Framework\App\ResourceConnection::DEFAULT_CONNECTION);
+        $varcharTable = $connection->getTableName('catalog_product_entity_varchar');
+        $eavTable = $connection->getTableName('eav_attribute');
 
         $select = $connection->select()
-                ->from(['v' => $varcharTable], ['value_id', 'value'])
-                ->join(['a' => $resource->getTableName('eav/attribute')], 'v.attribute_id = a.attribute_id', [])
-                ->where('a.frontend_input = ?', 'media_gallery')
-                ->orWhere('a.frontend_input = ?', 'media_image');
+            ->from(['v' => $varcharTable], ['value_id', 'value'])
+            ->join(['a' => $eavTable], 'v.attribute_id = a.attribute_id', [])
+            ->where('a.frontend_input = ?', 'gallery')
+            ->orWhere('a.frontend_input = ?', 'media_image');
 
         $values = [];
         $result = $connection->query($select);
@@ -182,17 +202,12 @@ class AbstractCommand extends AbstractMagentoCommand
      */
     protected function _getProductImageGallery()
     {
+        $connection = $this->resource->getConnection(\Magento\Framework\App\ResourceConnection::DEFAULT_CONNECTION);
 
-        /** @var \Mage_Core_Model_Resource $resource */
-        $resource = $this->_getModel('core/resource', '\Mage_Core_Model_Resource');
-
-        /** @var \Magento_Db_Adapter_Pdo_Mysql $connection */
-        $connection = $resource->getConnection('core_write');
-
-        $galleryTable = $resource->getTableName('catalog/product') . '_media_gallery';
+        $galleryTable = $connection->getTableName('catalog_product_entity_media_gallery');
 
         $select = $connection->select()
-                ->from(['v' => $galleryTable], ['value_id', 'value']);
+            ->from(['v' => $galleryTable], ['value_id', 'value']);
 
         $values = [];
         $result = $connection->query($select);
