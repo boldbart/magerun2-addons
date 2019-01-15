@@ -1,6 +1,11 @@
 MageRun Addons
 ==============
 
+#### This is a work in progress port for Magento 2 of the excellent Elgentos Magerun Addons for Magento 1. Documentation is not yet updated.
+
+Currently ported commands:
+* media:images:removeorphans
+
 Some additional commands for the excellent N98-MageRun Magento command-line tool.
 
 The purpose of this project is just to have an easy way to deploy new, custom
